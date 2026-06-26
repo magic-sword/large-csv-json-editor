@@ -1,0 +1,455 @@
+:root {
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #252538;
+    --bg-toolbar: rgba(30, 30, 46, 0.85);
+    --border-color: #313244;
+    --text-color: #cdd6f4;
+    --text-muted: #7f849c;
+    --accent-color: #cba6f7;
+    --accent-hover: #b4befe;
+    --error-color: #f38ba8;
+    --success-color: #a6e3a1;
+    --row-height: 40px;
+    --header-height: 40px;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* ローダー */
+#loader-container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-primary);
+    z-index: 9999;
+}
+
+.loader {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--border-color);
+    border-radius: 50%;
+    border-top-color: var(--accent-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#loader-text {
+    margin-top: 20px;
+    font-size: 16px;
+    color: var(--text-muted);
+}
+
+/* ツールバー */
+.toolbar {
+    height: 50px;
+    background: var(--bg-toolbar);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: relative;
+    z-index: 100;
+}
+
+button {
+    background: var(--accent-color);
+    color: var(--bg-primary);
+    border: none;
+    padding: 8px 16px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+button:disabled {
+    background: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+#row-count-display {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* 仮想スクロールテーブル */
+#table-container {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
+#virtual-table {
+    position: relative;
+    width: 100%;
+}
+
+.table-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: var(--header-height);
+    background-color: var(--bg-secondary);
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    box-sizing: border-box;
+}
+
+.table-header-cell {
+    flex: 1;
+    min-width: 150px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: var(--text-muted);
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    box-sizing: border-box;
+}
+
+.table-row {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: var(--row-height);
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    box-sizing: border-box;
+}
+
+.table-row:hover {
+    background-color: rgba(203, 166, 247, 0.05);
+}
+
+.table-cell {
+    flex: 1;
+    min-width: 150px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid var(--border-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    box-sizing: border-box;
+}
+
+.table-cell.json-cell {
+    color: #89b4fa;
+    font-family: 'Fira Code', Consolas, Monaco, monospace;
+    font-size: 12px;
+}
+
+.table-cell.edited {
+    background-color: rgba(166, 227, 161, 0.15);
+    border-left: 2px solid var(--success-color);
+}
+
+/* モーダル */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    width: 85%;
+    height: 85%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close-btn {
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.close-btn:hover {
+    color: var(--text-color);
+}
+
+#monaco-container {
+    flex: 1;
+    width: 100%;
+    background: #1e1e1e;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#modal-cancel-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+#modal-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* タブUI */
+.modal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-left: 20px;
+}
+
+.tab-btn {
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-color);
+}
+
+.tab-btn.active {
+    background: var(--accent-color);
+    color: var(--bg-primary);
+    border-color: var(--accent-color);
+}
+
+/* エディタコンテンツエリア */
+#editor-body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-content {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+#tree-container {
+    background: var(--bg-primary);
+    padding: 15px 20px;
+}
+
+/* ツリーエディタ */
+#tree-editor-root {
+    font-family: 'Fira Code', Consolas, Monaco, monospace;
+    font-size: 13px;
+    color: var(--text-color);
+}
+
+.tree-node {
+    margin: 4px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tree-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+    min-height: 28px;
+}
+
+.tree-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tree-children {
+    padding-left: 20px;
+    margin-left: 8px;
+    border-left: 1px dashed rgba(127, 132, 156, 0.3); /* ガイドライン */
+}
+
+/* 展開・折りたたみ矢印 */
+.tree-toggle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    user-select: none;
+}
+
+.tree-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.tree-toggle.empty {
+    opacity: 0;
+    cursor: default;
+}
+
+/* 各種インプット */
+.tree-key-input, .tree-val-input {
+    background: var(--bg-secondary);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    transition: border 0.15s ease;
+}
+
+.tree-key-input:focus, .tree-val-input:focus {
+    border-color: var(--accent-color);
+}
+
+.tree-key-input {
+    width: 140px;
+    font-weight: 600;
+}
+
+.tree-val-input {
+    width: 250px;
+}
+
+.tree-type-select {
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-family: inherit;
+    font-size: 11px;
+    outline: none;
+    cursor: pointer;
+}
+
+.tree-type-select:focus {
+    border-color: var(--accent-color);
+}
+
+/* データ型ごとのカラーリング */
+.type-string { color: var(--success-color); }
+.type-number { color: #89b4fa; }
+.type-boolean { color: #f9e2af; }
+.type-null { color: var(--text-muted); }
+.type-object, .type-array { color: var(--accent-color); font-weight: bold; }
+
+/* アクションボタン */
+.tree-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0.3;
+    transition: opacity 0.15s ease;
+}
+
+.tree-row:hover .tree-actions {
+    opacity: 1;
+}
+
+.tree-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 3px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.tree-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.05);
+}
+
+.tree-btn.delete-btn:hover {
+    color: var(--error-color);
+    background: rgba(243, 139, 168, 0.1);
+}
+
+.tree-btn.add-btn:hover {
+    color: var(--success-color);
+    background: rgba(166, 227, 161, 0.1);
+}
+
+/* エラーインジケーター */
+.error-indicator {
+    color: var(--error-color);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+    padding-left: 5px;
+    font-weight: 500;
+}
+

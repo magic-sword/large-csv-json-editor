@@ -1,0 +1,25 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "num_scenarios": 3,
+  "persona": "A standard user asking natural language questions related to large-csv-json-processing-skill",
+  "scenarios": [
+    {
+      "goal": "Verify that the agent correctly triggers large-csv-json-processing-skill for positive prompts.",
+      "constraints": [
+        "Ask a query that matches: Node.jsを用いた大容量CSV（JSON文字列含む）のパース、部分読み込み、オンデマンド読み込み、編集データの部分保存、メモリ効率の良いストリーム処理を行う。"
+      ]
+    },
+    {
+      "goal": "Verify that the agent behaves correctly under edge case requests.",
+      "constraints": [
+        "Include slightly ambiguous phrasing."
+      ]
+    },
+    {
+      "goal": "Verify that the agent rejects out-of-scope requests (Negative test).",
+      "constraints": [
+        "Ask a query related to general help that should NOT trigger large-csv-json-processing-skill."
+      ]
+    }
+  ]
+}

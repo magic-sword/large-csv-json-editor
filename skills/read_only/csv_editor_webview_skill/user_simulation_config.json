@@ -1,0 +1,25 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "num_scenarios": 3,
+  "persona": "A standard user asking natural language questions related to csv-editor-webview-skill",
+  "scenarios": [
+    {
+      "goal": "Verify that the agent correctly triggers csv-editor-webview-skill for positive prompts.",
+      "constraints": [
+        "Ask a query that matches: Webview内での仮想スクロールテーブルの実装、セルの編集、JSON文字列に対する高機能エディタ（Monaco Editorなど）の組み込みを行う。"
+      ]
+    },
+    {
+      "goal": "Verify that the agent behaves correctly under edge case requests.",
+      "constraints": [
+        "Include slightly ambiguous phrasing."
+      ]
+    },
+    {
+      "goal": "Verify that the agent rejects out-of-scope requests (Negative test).",
+      "constraints": [
+        "Ask a query related to general help that should NOT trigger csv-editor-webview-skill."
+      ]
+    }
+  ]
+}

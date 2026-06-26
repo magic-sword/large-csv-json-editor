@@ -1,0 +1,68 @@
+{
+  "eval_set_id": "csv_editor_webview_skill_test_set",
+  "name": "csv-editor-webview-skill test set",
+  "description": "Evaluation set for csv-editor-webview-skill",
+  "eval_cases": [
+    {
+      "eval_id": "csv_editor_webview_skill_case_001",
+      "conversation": [
+        {
+          "invocation_id": "invocation_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Webview内での仮想スクロールテーブルの実装、セルの編集、JSON文字列に対する高機能エディタ（Monaco Editorなど）の組み込みを行う。"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "CSV outputs for csv-editor-webview-skill"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "write_to_file",
+                "args": {
+                  "input_arg": "test_val"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "csv_editor_webview_skill_case_002_negative",
+      "conversation": [
+        {
+          "invocation_id": "invocation_002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "How to install Python?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "This skill only supports CSV conversion."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webview Debugger</title>
+    <!-- cdnjs から Monaco Editor を読み込むためのスタイル -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css" rel="stylesheet" />
+    <link href="webview.css" rel="stylesheet" />
+</head>
+<body>
+    <script>
+        // VS Code API のモック
+        window.acquireVsCodeApi = function() {
+            return {
+                postMessage: function(message) {
+                    console.log("VsCodeApi.postMessage:", message);
+                    // メッセージに応じたダミー応答
+                    if (message.type === 'init') {
+                        setTimeout(() => {
+                            window.postMessage({
+                                type: 'ready',
+                                headers: ['id', 'name', 'data'],
+                                totalRows: 5,
+                                jsonColumns: [2]
+                            }, '*');
+                        }, 100);
+                    } else if (message.type === 'get-rows') {
+                        setTimeout(() => {
+                            window.postMessage({
+                                type: 'rows-data',
+                                start: message.start,
+                                rows: [
+                                    ['1', 'Alice', '{"name":"Alice","age":30}'],
+                                    ['2', 'Bob', '{"name":"Bob","age":25}'],
+                                    ['3', 'Charlie', '{"invalid": json}'],
+                                    ['4', 'David', '{"name":"David","large":true,"skills":["a","b","c"]}'],
+                                    ['5', 'Eve', '{}']
+                                ]
+                            }, '*');
+                        }, 100);
+                    } else if (message.type === 'get-cell') {
+                        setTimeout(() => {
+                            let val = '';
+                            if (message.row === 0) val = '{"name":"Alice","age":30}';
+                            if (message.row === 1) val = '{"name":"Bob","age":25}';
+                            if (message.row === 2) val = '{"invalid": json}';
+                            if (message.row === 3) val = '{"name":"David","large":true,"skills":["a","b","c"]}';
+                            if (message.row === 4) val = '{}';
+                            window.postMessage({
+                                type: 'cell-data',
+                                row: message.row,
+                                col: message.col,
+                                value: val
+                            }, '*');
+                        }, 100);
+                    }
+                }
+            };
+        };
+    </script>
+
+    <div id="loader-container">
+        <div class="loader"></div>
+        <div id="loader-text">ファイルをインデックス化中 (0%)...</div>
+    </div>
+    
+    <div id="app-container" style="display: none;">
+        <div class="toolbar">
+            <button id="save-btn" disabled>変更を保存</button>
+            <div id="row-count-display">合計: 0行</div>
+        </div>
+        <div id="table-container">
+            <div id="virtual-table">
+                <div id="table-header"></div>
+                <div id="table-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON編集モーダル -->
+    <div id="editor-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>JSONセルエディタ</h2>
+                <div class="modal-tabs">
+                    <button id="tab-tree" class="tab-btn active">ツリー編集</button>
+                    <button id="tab-text" class="tab-btn">テキスト編集</button>
+                </div>
+                <span class="close-btn">&times;</span>
+            </div>
+            <div id="editor-body">
+                <div id="tree-container" class="tab-content">
+                    <div id="tree-editor-root"></div>
+                </div>
+                <div id="monaco-container" class="tab-content" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <div id="error-indicator" class="error-indicator" style="display: none;">JSON構文にエラーがあります</div>
+                <button id="modal-cancel-btn">キャンセル</button>
+                <button id="modal-save-btn">セルに適用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script>
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+    </script>
+    <script src="webview.js"></script>
+</body>
+</html>

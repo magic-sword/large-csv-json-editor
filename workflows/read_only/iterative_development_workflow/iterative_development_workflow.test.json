@@ -1,0 +1,190 @@
+{
+  "eval_set_id": "iterative_development_workflow_test_set",
+  "name": "iterative-development-workflow test set",
+  "description": "Evaluation set for iterative-development-workflow workflow",
+  "eval_cases": [
+    {
+      "eval_id": "iterative_development_workflow_case_001_positive",
+      "conversation": [
+        {
+          "invocation_id": "invocation_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "VS Code Extension Requirements"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "completed"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_command",
+                "args": {
+                  "CommandLine": "python workflows/read_only/iterative_development_workflow/scripts/run_workflow.py --input test"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "iterative_development_workflow_case_002_positive",
+      "conversation": [
+        {
+          "invocation_id": "invocation_002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Run the iterative-development-workflow workflow on input sample"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "completed"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_command",
+                "args": {
+                  "CommandLine": "python workflows/read_only/iterative_development_workflow/scripts/run_workflow.py --input test"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "iterative_development_workflow_case_003_positive",
+      "conversation": [
+        {
+          "invocation_id": "invocation_003",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Execute iterative-development-workflow"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "completed"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_command",
+                "args": {
+                  "CommandLine": "python workflows/read_only/iterative_development_workflow/scripts/run_workflow.py --input test"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "iterative_development_workflow_case_004_negative",
+      "conversation": [
+        {
+          "invocation_id": "invocation_004",
+          "user_content": {
+            "parts": [
+              {
+                "text": "How to cook ramen?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "This workflow does not support general questions."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "iterative_development_workflow_case_005_negative",
+      "conversation": [
+        {
+          "invocation_id": "invocation_005",
+          "user_content": {
+            "parts": [
+              {
+                "text": "How do I install Python?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "This workflow does not support general questions."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "iterative_development_workflow_case_006_negative",
+      "conversation": [
+        {
+          "invocation_id": "invocation_006",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Tell me a joke"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "This workflow does not support general questions."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ]
+    }
+  ]
+}

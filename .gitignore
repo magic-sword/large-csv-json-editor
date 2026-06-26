@@ -1,0 +1,14 @@
+# User requested exclusions
+test_data/
+temp_workflow_data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build and IDE outputs
+node_modules/
+out/
+.vscode-test/
+*.vsix
+output.json
