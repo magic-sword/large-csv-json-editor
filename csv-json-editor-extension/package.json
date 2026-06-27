@@ -1,9 +1,15 @@
 {
-  "name": "csv-json-editor-extension",
-  "displayName": "Large CSV JSON Editor",
+  "name": "large-csv-json-editor",
+  "displayName": "Large CSV-JSON Editor",
   "description": "An extension to view, edit and save large CSV files containing JSON cells, optimized for gigabyte-scale datasets.",
   "version": "1.0.0",
-  "publisher": "antigravity",
+  "publisher": "magic-sword",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/magic-sword/large-csv-json-editor.git",
+    "directory": "csv-json-editor-extension"
+  },
+  "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -16,7 +22,7 @@
     "customEditors": [
       {
         "viewType": "csvJsonEditor.edit",
-        "displayName": "Large CSV JSON Editor",
+        "displayName": "Large CSV-JSON Editor",
         "selector": [
           {
             "filenamePattern": "*.csv"
