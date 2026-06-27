@@ -266,8 +266,8 @@ export class CsvJsonCustomEditorProvider implements vscode.CustomEditorProvider<
     <div id="editor-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>JSONセルエディタ</h2>
-                <div class="modal-tabs">
+                <h2 id="modal-title">JSONセルエディタ</h2>
+                <div id="modal-tabs" class="modal-tabs">
                     <button id="tab-tree" class="tab-btn active">ツリー編集</button>
                     <button id="tab-text" class="tab-btn">テキスト編集</button>
                 </div>

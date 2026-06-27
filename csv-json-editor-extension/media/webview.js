@@ -29,6 +29,8 @@
     const closeBtn = document.querySelector('.close-btn');
     const modalCancelBtn = document.getElementById('modal-cancel-btn');
     const modalSaveBtn = document.getElementById('modal-save-btn');
+    const modalTitle = document.getElementById('modal-title');
+    const modalTabs = document.getElementById('modal-tabs');
 
     // タブ関連要素
     const tabTree = document.getElementById('tab-tree');
@@ -91,7 +93,7 @@
                 break;
 
             case 'cell-data':
-                openJsonEditor(message.row, message.col, message.value);
+                openCellEditor(message.row, message.col, message.value);
                 break;
 
             case 'save-progress':
@@ -240,29 +242,13 @@
         currentEditingCell = { row, col };
         const isJson = jsonColumns.includes(col);
         
-        if (isJson) {
-            loaderContainer.style.display = 'flex';
-            loaderText.textContent = '巨大JSONデータをロード中...';
-            vscode.postMessage({
-                type: 'get-cell',
-                row,
-                col
-            });
-        } else {
-            let currentVal = '';
-            const cellKey = `${row}-${col}`;
-            if (editedCells.has(cellKey)) {
-                currentVal = editedCells.get(cellKey);
-            } else {
-                const rowData = cache.get(row);
-                currentVal = rowData ? rowData[col] : '';
-            }
-
-            const newVal = prompt('値を編集してください:', currentVal);
-            if (newVal !== null && newVal !== currentVal) {
-                applyCellChange(row, col, newVal);
-            }
-        }
+        loaderContainer.style.display = 'flex';
+        loaderText.textContent = isJson ? '巨大JSONデータをロード中...' : 'セルデータをロード中...';
+        vscode.postMessage({
+            type: 'get-cell',
+            row,
+            col
+        });
     }
 
     // タブ切り替えイベント
@@ -301,30 +287,38 @@
                 monacoContainer.style.display = 'block';
                 activeTab = 'text';
 
-                // Monaco Editor の遅延ロードと初期化（表示状態になってから作成する）
-                if (!activeEditor) {
-                    loaderContainer.style.display = 'flex';
-                    loaderText.textContent = 'JSONエディタをロード中...';
-                    
-                    require(['vs/editor/editor.main'], function() {
-                        activeEditor = monaco.editor.create(monacoContainer, {
-                            value: textVal,
-                            language: 'json',
-                            theme: 'vs-dark',
-                            automaticLayout: true,
-                            minimap: { enabled: false },
-                            fontSize: 13,
-                            wordWrap: 'on'
-                        });
-                        loaderContainer.style.display = 'none';
-                    });
-                } else {
-                    activeEditor.setValue(textVal);
-                }
+                // Monaco Editor のロードと初期化
+                loadMonacoEditor(textVal, 'json');
             } catch (e) {
                 errorIndicator.style.display = 'block';
                 errorIndicator.textContent = 'JSON変換エラーが発生しました';
             }
+        }
+    }
+
+    // Monaco Editorの共通ロード/更新関数
+    function loadMonacoEditor(value, language, callback) {
+        if (!activeEditor) {
+            loaderContainer.style.display = 'flex';
+            loaderText.textContent = 'エディタをロード中...';
+            
+            require(['vs/editor/editor.main'], function() {
+                activeEditor = monaco.editor.create(monacoContainer, {
+                    value: value,
+                    language: language,
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    wordWrap: 'on'
+                });
+                loaderContainer.style.display = 'none';
+                if (callback) callback();
+            });
+        } else {
+            activeEditor.setValue(value);
+            monaco.editor.setModelLanguage(activeEditor.getModel(), language);
+            if (callback) callback();
         }
     }
 
@@ -635,52 +629,54 @@
     }
 
     // エディターモーダルの起動と表示
-    function openJsonEditor(row, col, jsonValue) {
+    function openCellEditor(row, col, cellValue) {
         loaderContainer.style.display = 'none';
         editorModal.style.display = 'flex';
         errorIndicator.style.display = 'none';
 
-        // JSONデータのパース
-        try {
-            currentJsonData = JSON.parse(jsonValue);
-            // デフォルトでツリータブを有効にする
-            activeTab = 'tree';
-            tabText.classList.remove('active');
-            tabTree.classList.add('active');
-            monacoContainer.style.display = 'none';
-            treeContainer.style.display = 'block';
-            
-            renderTreeEditor();
-        } catch (e) {
-            // パースに失敗した場合はテキストエディタを強制
-            currentJsonData = {};
+        const isJson = jsonColumns.includes(col);
+
+        if (isJson) {
+            modalTitle.textContent = 'JSONセルエディタ';
+            modalTabs.style.display = 'flex';
+
+            // JSONデータのパース
+            try {
+                currentJsonData = JSON.parse(cellValue);
+                // デフォルトでツリータブを有効にする
+                activeTab = 'tree';
+                tabText.classList.remove('active');
+                tabTree.classList.add('active');
+                monacoContainer.style.display = 'none';
+                treeContainer.style.display = 'block';
+                
+                renderTreeEditor();
+            } catch (e) {
+                // パースに失敗した場合はテキストエディタを強制
+                currentJsonData = {};
+                activeTab = 'text';
+                tabTree.classList.remove('active');
+                tabText.classList.add('active');
+                treeContainer.style.display = 'none';
+                monacoContainer.style.display = 'block';
+                errorIndicator.style.display = 'block';
+                errorIndicator.textContent = 'JSONパースエラー: テキスト編集で修正してください';
+
+                // パース失敗時は即座に Monaco Editor を表示状態でロード
+                loadMonacoEditor(cellValue, 'json');
+            }
+        } else {
+            modalTitle.textContent = 'セルエディタ';
+            modalTabs.style.display = 'none';
+
             activeTab = 'text';
             tabTree.classList.remove('active');
             tabText.classList.add('active');
             treeContainer.style.display = 'none';
             monacoContainer.style.display = 'block';
-            errorIndicator.style.display = 'block';
-            errorIndicator.textContent = 'JSONパースエラー: テキスト編集で修正してください';
 
-            // パース失敗時は即座に Monaco Editor を表示状態でロード
-            loaderContainer.style.display = 'flex';
-            loaderText.textContent = 'JSONエディタをロード中...';
-            require(['vs/editor/editor.main'], function() {
-                if (!activeEditor) {
-                    activeEditor = monaco.editor.create(monacoContainer, {
-                        value: jsonValue,
-                        language: 'json',
-                        theme: 'vs-dark',
-                        automaticLayout: true,
-                        minimap: { enabled: false },
-                        fontSize: 13,
-                        wordWrap: 'on'
-                    });
-                } else {
-                    activeEditor.setValue(jsonValue);
-                }
-                loaderContainer.style.display = 'none';
-            });
+            // Monaco Editor をプレーンテキストで起動
+            loadMonacoEditor(cellValue, 'plaintext');
         }
     }
 
@@ -704,24 +700,33 @@
     modalSaveBtn.addEventListener('click', () => {
         if (currentEditingCell) {
             let finalValue = '';
+            const isJson = jsonColumns.includes(currentEditingCell.col);
             
-            if (activeTab === 'tree') {
-                try {
-                    finalValue = JSON.stringify(currentJsonData);
-                } catch (e) {
-                    alert('JSONデータへの変換に失敗しました: ' + e.message);
-                    return;
+            if (isJson) {
+                if (activeTab === 'tree') {
+                    try {
+                        finalValue = JSON.stringify(currentJsonData);
+                    } catch (e) {
+                        alert('JSONデータへの変換に失敗しました: ' + e.message);
+                        return;
+                    }
+                } else {
+                    if (activeEditor) {
+                        finalValue = activeEditor.getValue();
+                        try {
+                            JSON.parse(finalValue);
+                        } catch (e) {
+                            if (!confirm('JSONの構文にエラーがあります。このまま適用しますか？')) {
+                                return;
+                            }
+                        }
+                    } else {
+                        return;
+                    }
                 }
             } else {
                 if (activeEditor) {
                     finalValue = activeEditor.getValue();
-                    try {
-                        JSON.parse(finalValue);
-                    } catch (e) {
-                        if (!confirm('JSONの構文にエラーがあります。このまま適用しますか？')) {
-                            return;
-                        }
-                    }
                 } else {
                     return;
                 }
