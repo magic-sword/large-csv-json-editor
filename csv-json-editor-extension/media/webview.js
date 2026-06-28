@@ -496,17 +496,29 @@
                 valInput.style.border = 'none';
                 valInput.style.background = 'transparent';
                 valInput.textContent = 'NULL';
+            } else if (type === 'string') {
+                valInput = document.createElement('textarea');
+                valInput.className = 'tree-val-input type-string';
+                valInput.value = val;
+                valInput.rows = 1;
+                valInput.addEventListener('change', () => {
+                    onUpdateParent(valInput.value);
+                });
+            } else if (type === 'number') {
+                valInput = document.createElement('input');
+                valInput.className = 'tree-val-input type-number';
+                valInput.value = val;
+                valInput.addEventListener('change', () => {
+                    let newVal = Number(valInput.value);
+                    if (isNaN(newVal)) newVal = 0;
+                    onUpdateParent(newVal);
+                });
             } else {
                 valInput = document.createElement('input');
                 valInput.className = `tree-val-input type-${type}`;
                 valInput.value = val;
                 valInput.addEventListener('change', () => {
-                    let newVal = valInput.value;
-                    if (type === 'number') {
-                        newVal = Number(newVal);
-                        if (isNaN(newVal)) newVal = 0;
-                    }
-                    onUpdateParent(newVal);
+                    onUpdateParent(valInput.value);
                 });
             }
             rowDiv.appendChild(valInput);

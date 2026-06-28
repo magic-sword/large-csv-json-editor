@@ -422,6 +422,14 @@ button:disabled {
     width: 250px;
 }
 
+textarea.tree-val-input {
+    resize: vertical;
+    min-height: 24px;
+    height: auto;
+    font-family: inherit;
+    vertical-align: middle;
+}
+
 .tree-type-select {
     background: var(--bg-secondary);
     color: var(--text-muted);
