@@ -55,6 +55,11 @@
     let currentJsonData = null; // 現在編集中のJSONオブジェクト
     let activeTab = 'tree'; // 'tree' | 'text'
 
+    // ページング変数
+    let currentPage = 1;
+    const pageSize = 20;
+    let totalPages = 1;
+
     // 初期化要求
     vscode.postMessage({ type: 'init' });
 
@@ -70,26 +75,29 @@
                 headers = message.headers;
                 totalRows = message.totalRows;
                 jsonColumns = message.jsonColumns;
+                totalPages = Math.ceil(totalRows / pageSize) || 1;
                 
                 // ヘッダー行を描画
                 renderHeader();
                 
                 // テーブル全体の高さを設定
-                virtualTable.style.height = `${(totalRows * rowHeight) + headerHeight}px`;
+                virtualTable.style.height = 'auto';
                 rowCountDisplay.textContent = `合計: ${totalRows.toLocaleString()}行`;
                 
                 loaderContainer.style.display = 'none';
                 appContainer.style.display = 'block';
                 
-                // 初回描画
-                updateViewport();
+                // 最初のページをロード
+                loadPage(1);
                 break;
 
             case 'rows-data':
+                cache.clear(); // 現在のページデータのみにするためクリア
                 message.rows.forEach((row, i) => {
                     cache.set(message.start + i, row);
                 });
-                renderVisibleRows();
+                loaderContainer.style.display = 'none';
+                renderPageRows();
                 break;
 
             case 'cell-data':
@@ -102,16 +110,17 @@
 
             case 'save-complete':
                 totalRows = message.totalRows;
-                virtualTable.style.height = `${(totalRows * rowHeight) + headerHeight}px`;
+                totalPages = Math.ceil(totalRows / pageSize) || 1;
                 rowCountDisplay.textContent = `合計: ${totalRows.toLocaleString()}行`;
                 
                 editedCells.clear();
-                cache.clear(); // キャッシュをリセットして再取得
+                cache.clear();
                 
                 saveBtn.disabled = true;
                 saveBtn.textContent = '変更を保存';
                 
-                updateViewport();
+                // 現在のページを再読み込み
+                loadPage(currentPage);
                 break;
         }
     });
@@ -133,70 +142,50 @@
         tableHeader.appendChild(headerRow);
     }
 
-    // ビューポートの更新 (表示領域の計算とデータ要求)
-    let requestTimeout = null;
+    // ページングコントロールの更新
+    function updatePaginationControls() {
+        const prevBtn = document.getElementById('prev-page-btn');
+        const nextBtn = document.getElementById('next-page-btn');
+        const pageInput = document.getElementById('page-input');
+        const totalPagesDisplay = document.getElementById('total-pages-display');
 
-    function updateViewport() {
-        const scrollTop = tableContainer.scrollTop;
-        const containerHeight = tableContainer.clientHeight;
+        pageInput.value = currentPage;
+        totalPagesDisplay.textContent = totalPages;
         
-        // 画面外に数行余白を持たせて計算
-        const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - 5);
-        const endRow = Math.min(totalRows - 1, Math.floor((scrollTop + containerHeight) / rowHeight) + 5);
-
-        // キャッシュにない行があるか確認
-        const missingRanges = [];
-        let currentMissingStart = null;
-
-        for (let r = startRow; r <= endRow; r++) {
-            if (!cache.has(r)) {
-                if (currentMissingStart === null) {
-                    currentMissingStart = r;
-                }
-            } else {
-                if (currentMissingStart !== null) {
-                    missingRanges.push({ start: currentMissingStart, end: r - 1 });
-                    currentMissingStart = null;
-                }
-            }
-        }
-        if (currentMissingStart !== null) {
-            missingRanges.push({ start: currentMissingStart, end: endRow });
-        }
-
-        // 不足データをホストに要求 (デバウンス)
-        if (missingRanges.length > 0) {
-            clearTimeout(requestTimeout);
-            requestTimeout = setTimeout(() => {
-                missingRanges.forEach(range => {
-                    vscode.postMessage({
-                        type: 'get-rows',
-                        start: range.start,
-                        end: range.end
-                    });
-                });
-            }, 30);
-        }
-
-        renderVisibleRows();
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
     }
 
-    // 表示されている行だけをレンダリングする
-    function renderVisibleRows() {
-        const scrollTop = tableContainer.scrollTop;
-        const containerHeight = tableContainer.clientHeight;
+    // ページのロード
+    function loadPage(page) {
+        currentPage = page;
+        updatePaginationControls();
         
-        const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
-        const endRow = Math.min(totalRows - 1, Math.floor((scrollTop + containerHeight) / rowHeight) + 2);
+        const start = (currentPage - 1) * pageSize;
+        const end = Math.min(totalRows - 1, start + pageSize - 1);
+        
+        loaderContainer.style.display = 'flex';
+        loaderText.textContent = `ページ ${currentPage} のデータをロード中...`;
+        
+        vscode.postMessage({
+            type: 'get-rows',
+            start,
+            end
+        });
+    }
 
+    // ページ内の行を描画する
+    function renderPageRows() {
         tableBody.innerHTML = '';
+
+        const startRow = (currentPage - 1) * pageSize;
+        const endRow = Math.min(totalRows - 1, startRow + pageSize - 1);
 
         for (let r = startRow; r <= endRow; r++) {
             const rowData = cache.get(r);
             
             const rowDiv = document.createElement('div');
             rowDiv.className = 'table-row';
-            rowDiv.style.top = `${(r * rowHeight) + headerHeight}px`;
 
             if (rowData) {
                 rowData.forEach((cellVal, c) => {
@@ -233,9 +222,45 @@
         }
     }
 
-    // スクロールイベント
-    tableContainer.addEventListener('scroll', updateViewport);
-    window.addEventListener('resize', updateViewport);
+    // ページングボタンイベント
+    document.getElementById('prev-page-btn').addEventListener('click', () => {
+        if (currentPage > 1) {
+            loadPage(currentPage - 1);
+        }
+    });
+
+    document.getElementById('next-page-btn').addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            loadPage(currentPage + 1);
+        }
+    });
+
+    // ページ直接入力イベント
+    const pageInput = document.getElementById('page-input');
+    
+    pageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            handlePageJump();
+        }
+    });
+
+    pageInput.addEventListener('blur', () => {
+        handlePageJump();
+    });
+
+    function handlePageJump() {
+        let val = parseInt(pageInput.value, 10);
+        if (isNaN(val) || val < 1) {
+            val = 1;
+        } else if (val > totalPages) {
+            val = totalPages;
+        }
+        if (val !== currentPage) {
+            loadPage(val);
+        } else {
+            pageInput.value = currentPage;
+        }
+    }
 
     // セルの編集ハンドリング
     function handleCellEdit(row, col) {
@@ -693,7 +718,7 @@
         });
 
         saveBtn.disabled = false;
-        renderVisibleRows();
+        renderPageRows();
     }
 
     // モーダルの保存処理 (適用ボタン)

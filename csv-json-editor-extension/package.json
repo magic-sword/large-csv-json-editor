@@ -2,7 +2,7 @@
   "name": "large-csv-json-editor",
   "displayName": "Large CSV-JSON Editor",
   "description": "An extension to view, edit and save large CSV files containing JSON cells, optimized for gigabyte-scale datasets.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "magic-sword",
   "repository": {
     "type": "git",

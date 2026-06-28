@@ -150,42 +150,33 @@ export class CsvIndexer {
             return [];
         }
 
-        const startOffset = this.getOffsetAtLine(startLine);
-        const endOffset = (actualEndLine + 1 < this.rowCount) 
-            ? this.getOffsetAtLine(actualEndLine + 1) 
-            : this.totalSize;
-
-        const bufferSize = endOffset - startOffset;
-        if (bufferSize <= 0) {
-            return [];
-        }
-
         const fd = await fs.promises.open(this.filePath, 'r');
-        const buffer = Buffer.alloc(bufferSize);
-        await fd.read(buffer, 0, bufferSize, startOffset);
-        await fd.close();
+        const results: string[][] = [];
 
-        const content = buffer.toString('utf8');
-        
-        const rawLines: string[] = [];
-        let lineStart = 0;
-        let inQuote = false;
+        try {
+            for (let line = startLine; line <= actualEndLine; line++) {
+                const startOffset = this.getOffsetAtLine(line);
+                const endOffset = (line + 1 < this.rowCount) 
+                    ? this.getOffsetAtLine(line + 1) 
+                    : this.totalSize;
 
-        for (let i = 0; i < content.length; i++) {
-            const char = content[i];
-            if (char === '"') {
-                inQuote = !inQuote;
+                const bufferSize = endOffset - startOffset;
+                if (bufferSize <= 0) {
+                    results.push([]);
+                    continue;
+                }
+
+                const buffer = Buffer.alloc(bufferSize);
+                await fd.read(buffer, 0, bufferSize, startOffset);
+                const content = buffer.toString('utf8');
+                
+                results.push(this.parseCsvLine(content));
             }
-            if (!inQuote && char === '\n') {
-                rawLines.push(content.substring(lineStart, i + 1));
-                lineStart = i + 1;
-            }
-        }
-        if (lineStart < content.length) {
-            rawLines.push(content.substring(lineStart));
+        } finally {
+            await fd.close();
         }
 
-        return rawLines.map(line => this.parseCsvLine(line));
+        return results;
     }
 
     public parseCsvLine(line: string): string[] {

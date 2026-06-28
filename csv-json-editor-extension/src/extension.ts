@@ -7,6 +7,7 @@ class CsvCustomDocument implements vscode.CustomDocument {
     public readonly uri: vscode.Uri;
     public indexer: CsvIndexer;
     public changes: Map<number, string[]> = new Map(); // 未保存の編集差分 [行番号 -> 列配列]
+    public readQueue: Promise<void> = Promise.resolve(); // 読み込み処理の直列化キュー
 
     constructor(uri: vscode.Uri) {
         this.uri = uri;
@@ -115,34 +116,42 @@ export class CsvJsonCustomEditorProvider implements vscode.CustomEditorProvider<
 
                 case 'get-rows': {
                     const { start, end } = message;
-                    try {
-                        const rawRows = await document.indexer.getRows(start, end);
-                        
-                        // 変更がバッファされている行があれば上書き
-                        const finalRows = rawRows.map((row, relativeIdx) => {
-                            const absoluteIdx = start + relativeIdx;
-                            return document.changes.has(absoluteIdx) ? document.changes.get(absoluteIdx)! : row;
-                        });
+                    
+                    // 1回あたりの最大取得行数を制限（20行）
+                    const limit = 20;
+                    const actualEnd = Math.min(end, start + limit - 1);
 
-                        // 巨大なJSONは要約表示に変換
-                        const processedRows = finalRows.map(row => {
-                            return row.map(cell => {
-                                if (cell && cell.length > 200 && (cell.startsWith('{') || cell.startsWith('['))) {
-                                    const sizeInKb = (Buffer.byteLength(cell, 'utf8') / 1024).toFixed(1);
-                                    return `[Large JSON: ${sizeInKb}KB]`;
-                                }
-                                return cell;
+                    // I/Oの並行実行を防ぐため、readQueueで直列化する
+                    document.readQueue = document.readQueue.then(async () => {
+                        try {
+                            const rawRows = await document.indexer.getRows(start, actualEnd);
+                            
+                            // 変更がバッファされている行があれば上書き
+                            const finalRows = rawRows.map((row, relativeIdx) => {
+                                const absoluteIdx = start + relativeIdx;
+                                return document.changes.has(absoluteIdx) ? document.changes.get(absoluteIdx)! : row;
                             });
-                        });
 
-                        webviewPanel.webview.postMessage({
-                            type: 'rows-data',
-                            start,
-                            rows: processedRows
-                        });
-                    } catch (err: any) {
-                        vscode.window.showErrorMessage(`行データの取得に失敗しました: ${err.message}`);
-                    }
+                            // 巨大なJSONは要約表示に変換
+                            const processedRows = finalRows.map(row => {
+                                return row.map(cell => {
+                                    if (cell && cell.length > 200 && (cell.startsWith('{') || cell.startsWith('['))) {
+                                        const sizeInKb = (Buffer.byteLength(cell, 'utf8') / 1024).toFixed(1);
+                                        return `[Large JSON: ${sizeInKb}KB]`;
+                                    }
+                                    return cell;
+                                });
+                            });
+
+                            webviewPanel.webview.postMessage({
+                                type: 'rows-data',
+                                start,
+                                rows: processedRows
+                            });
+                        } catch (err: any) {
+                            vscode.window.showErrorMessage(`行データの取得に失敗しました: ${err.message}`);
+                        }
+                    });
                     break;
                 }
 
@@ -252,6 +261,11 @@ export class CsvJsonCustomEditorProvider implements vscode.CustomEditorProvider<
     <div id="app-container" style="display: none;">
         <div class="toolbar">
             <button id="save-btn" disabled>変更を保存</button>
+            <div class="pagination">
+                <button id="prev-page-btn" disabled>前へ</button>
+                <input type="number" id="page-input" min="1" value="1"> / <span id="total-pages-display">1</span> ページ
+                <button id="next-page-btn" disabled>次へ</button>
+            </div>
             <div id="row-count-display">合計: 0行</div>
         </div>
         <div id="table-container">
